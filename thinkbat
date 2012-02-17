@@ -1,0 +1,67 @@
+#!/bin/sh
+SYSBAT='/sys/devices/platform/smapi'
+IBAT='BAT0'
+INFO_DIR=${SYSBAT}/${IBAT}
+VENDOR_INFO='model barcoding serial manufacturer manufacture_date'
+PRODUCT_INFO='first_use_date design_capacity design_voltage cycle_count'
+STATUS_INFO='temperature remaining_percent remaining_running_time remaining_charging_time last_full_capacity start_charge_thresh stop_charge_thresh'
+
+if [ -d "${INFO_DIR}" ]
+then
+	echo -e "\n==========VENDOR INFORMATION=========="
+	for i in ${VENDOR_INFO}
+	do
+		echo -e "$i:\t\t$(cat ${INFO_DIR}/$i)"
+	done
+
+
+	echo -e "\n==========PRODUCT INFORMATION=========="
+	for i in ${PRODUCT_INFO}
+	do
+		if [[ "x${i}" == "xdesign_capacity" ]]
+		then
+			DESIGN_CAP=$(cat ${INFO_DIR}/$i)
+			#echo -e "$i:\t\t$(echo "scale=2;$DESIGN_CAP/100"|bc)"
+			echo -e "$i:\t${DESIGN_CAP} mWh"
+		fi
+		if [[ "x${i}" == "xdesign_voltage"  ]]
+		then
+			DESIGN_VOL=$(cat ${INFO_DIR}/$i)
+			echo -e "$i:\t\t$(echo "scale=2;$DESIGN_VOL/1000"|bc) V"
+		fi
+		if [[ "x${i}" == "xcycle_count" ]]
+		then
+			echo -e "$i:\t\t$(cat ${INFO_DIR}/$i)"
+		fi
+	done
+	
+	echo -e "\n==========STATUS INFORMATION==========="
+	for i in ${STATUS_INFO}
+	do
+		if [[ "x${i}" == "xtemperature" ]]
+		then
+			TEPR=$(cat ${INFO_DIR}/$i)
+			TEPR=$(echo "scale=2;$TEPR/1000"|bc)
+			if [[ "${TEPR}" > "35" ]]
+			then
+				TEPR="\E[31;40m\033[2m${TEPR}\033[0m"
+			else 
+				TEPR="\E[32;40m\033[2m${TEPR}\033[0m"
+			fi
+			echo -e "$i:\t\t$TEPR C"
+		fi
+		if [[ "x${i}" == "xremaining_percent" ]]
+		then
+			REMAIN=$(cat ${INFO_DIR}/$i)
+			if [[ "${REMAIN}" < "20" ]]
+			then
+				REMAIN="\E[31;40m\033[2m${REMAIN}\033[0m"
+			elif [[ "${REMAIN}" > "50"  ]]
+			then
+				REMAIN="\E[32;40m\033[2m${REMAIN}\033[0m"
+			fi
+			echo -e "$i:\t${REMAIN} %"
+		fi
+	done
+
+fi
