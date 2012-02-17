@@ -1,0 +1,17 @@
+A very simple bash script to format /sys/devices/platform/smapi/BATX infomation, then output like this:
+
+==========VENDOR INFORMATION==========
+model:          42T4661
+barcoding:              1ZH4708K0JX
+serial:         717
+manufacturer:           SANYO
+manufacture_date:               2010-08-19
+
+==========PRODUCT INFORMATION==========
+design_capacity:        66240 mWh
+design_voltage:         14.40 V
+cycle_count:            33
+
+==========STATUS INFORMATION===========
+temperature:            27.00 C
+remaining_percent:      45 %
