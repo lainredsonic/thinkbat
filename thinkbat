@@ -4,7 +4,7 @@ IBAT='BAT0'
 INFO_DIR=${SYSBAT}/${IBAT}
 VENDOR_INFO='model barcoding serial manufacturer manufacture_date'
 PRODUCT_INFO='first_use_date design_capacity design_voltage cycle_count'
-STATUS_INFO='temperature remaining_percent remaining_running_time remaining_charging_time last_full_capacity start_charge_thresh stop_charge_thresh'
+STATUS_INFO='temperature state remaining_percent remaining_running_time remaining_charging_time last_full_capacity start_charge_thresh stop_charge_thresh'
 
 if [ -d "${INFO_DIR}" ]
 then
@@ -42,7 +42,7 @@ then
 		then
 			TEPR=$(cat ${INFO_DIR}/$i)
 			TEPR=$(echo "scale=2;$TEPR/1000"|bc)
-			if [[ "${TEPR}" > "35" ]]
+			if [[ ${TEPR} > 35 ]]
 			then
 				TEPR="\E[31;40m\033[2m${TEPR}\033[0m"
 			else 
@@ -50,17 +50,56 @@ then
 			fi
 			echo -e "$i:\t\t$TEPR C"
 		fi
+
+		if [[ "x${i}" == "xstate" ]]
+		then
+			STATE=$(cat ${INFO_DIR}/$i)
+			if [[ "x${STATE}" == "xdischarging"  ]]
+			then
+				STATE="	+===============+	\n    \
+		|discharge ->>>	|}	\n    \
+		+===============+	\n    "
+
+			elif [[ "x${STATE}" == "xidle"  ]]
+			then
+				STATE="\t\tZzz~"
+			elif [[ "x${STATE}" == "xcharging" ]]
+			then
+                                STATE="+===============+	\n\
+	|charge	<<<-	|}	\n\
+	+===============+	\n	" 
+			fi
+			echo -e "$i:\t${STATE}"
+		fi
+
 		if [[ "x${i}" == "xremaining_percent" ]]
 		then
 			REMAIN=$(cat ${INFO_DIR}/$i)
-			if [[ "${REMAIN}" < "20" ]]
+			if [[ ${REMAIN} < 20 ]]
 			then
 				REMAIN="\E[31;40m\033[2m${REMAIN}\033[0m"
-			elif [[ "${REMAIN}" > "50"  ]]
+			elif [[ ${REMAIN} > 50  ]]
 			then
 				REMAIN="\E[32;40m\033[2m${REMAIN}\033[0m"
 			fi
 			echo -e "$i:\t${REMAIN} %"
+		fi
+
+		if [[ "x${i}" == "xremaining_running_time"  ]]
+		then
+			REMAIN_TIME=$(cat ${INFO_DIR}/$i)
+			if [[  "x${REMAIN_TIME}" != "xnot_discharging"   ]]
+				then
+					if [[ ${REMAIN_TIME} -le 20 ]]
+					then 
+						REMAIN_TIME="\E[31;40m\033[2m${REMAIN_TIME}\033[0m"
+					elif [[ ${REMAIN_TIME} -gt 160 ]]
+					then
+						REMAIN_TIME="\E[32;40m\033[2m${REMAIN_TIME}\033[0m"
+					fi
+
+					echo -e "$i:\t${REMAIN_TIME}"
+				fi
 		fi
 	done
 
